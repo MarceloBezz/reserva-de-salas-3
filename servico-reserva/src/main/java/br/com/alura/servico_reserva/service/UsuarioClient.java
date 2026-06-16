@@ -1,14 +1,25 @@
 package br.com.alura.servico_reserva.service;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-
 import br.com.alura.servico_reserva.model.usuario.Usuario;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-@FeignClient(name = "servico-usuario")
-public interface UsuarioClient {
-    @RequestMapping(method = RequestMethod.GET, value = "/busca-email/{email}")
-    Usuario autenticaPorEmail(@PathVariable String email);
+@Component
+public class UsuarioClient {
+
+    private final WebClient client;
+
+    public UsuarioClient(@Qualifier("usuarioWebClient") WebClient client) {
+        this.client = client;
+    }
+
+    public Mono<Usuario> autenticaPorEmail(String email) {
+        return client.get()
+                .uri("/busca-email/{email}", email)
+                .retrieve()
+                .bodyToMono(Usuario.class);
+    }
 }

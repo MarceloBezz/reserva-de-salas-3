@@ -21,13 +21,13 @@ public class ConfiguracoesAMQP {
     public RabbitTemplate rabbitTemplate(ConnectionFactory conn, Jackson2JsonMessageConverter messageConverter) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(conn);
         rabbitTemplate.setMessageConverter(messageConverter);
-        return  rabbitTemplate;
+        return rabbitTemplate;
     }
 
     @Bean
     public Queue filaReservasEnviarEmail() {
         return QueueBuilder
-                .nonDurable("reservas.enviar-email")
+                .durable("reservas.enviar-email")
                 .build();
     }
 
@@ -40,14 +40,16 @@ public class ConfiguracoesAMQP {
 
     @Bean
     public Binding bindReservasEmail() {
-        return  BindingBuilder
+        return BindingBuilder
                 .bind(filaReservasEnviarEmail())
                 .to(fanoutExchange());
     }
 
     @Bean
     public RabbitAdmin criaRabbitAdmin(ConnectionFactory conn) {
-        return new RabbitAdmin(conn);
+        RabbitAdmin admin = new RabbitAdmin(conn);
+        admin.setAutoStartup(true);
+        return admin;
     }
 
     @Bean

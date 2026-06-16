@@ -13,12 +13,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import jakarta.persistence.EntityNotFoundException;
-
 @RestControllerAdvice
 public class TratadorDeErros {
     
-    @ExceptionHandler({EntityNotFoundException.class, NoSuchElementException.class})
+    @ExceptionHandler({NoSuchElementException.class})
     public ResponseEntity<Void> tratarErro404() {
         return ResponseEntity.notFound().build();
     }

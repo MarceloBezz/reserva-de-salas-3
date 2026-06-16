@@ -1,19 +1,18 @@
 package br.com.alura.servico_reserva.infra.config;
 
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.core.env.Environment;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebFluxSecurity
 public class Configuracoes {
 
     private final FiltroTokenAcesso filtroTokenAcesso;
@@ -23,16 +22,13 @@ public class Configuracoes {
     }
 
     @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    protected SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
         return http
-                .authorizeHttpRequests(req -> {
-                    req.anyRequest().authenticated();
-                })
-                .sessionManagement(sm -> {
-                    sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-                })
-                .addFilterBefore(filtroTokenAcesso, UsernamePasswordAuthenticationFilter.class)
-                .csrf(csrf -> csrf.disable()) // O CSRF deve estar desabilitado para funcionamento do JWT
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .authorizeExchange(exchanges -> exchanges
+                        .anyExchange()
+                        .authenticated())
+                .addFilterAt(filtroTokenAcesso, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 
@@ -40,12 +36,4 @@ public class Configuracoes {
     protected PasswordEncoder encriptador() {
         return new BCryptPasswordEncoder();
     }
-
-    @Bean
-    protected AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-
 }

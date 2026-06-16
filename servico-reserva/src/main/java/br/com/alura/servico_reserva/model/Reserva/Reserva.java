@@ -2,36 +2,31 @@ package br.com.alura.servico_reserva.model.Reserva;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "reservas")
+@Table("reservas")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Reserva {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "usuario_id")
-//    private Usuario usuario;
+    @Column("usuario_id")
     private Long usuarioId;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    private Sala sala; FetchType.LAZY)
-    @Column(nullable = false)
+    @Column("sala_id")
     private Long salaId;
     private LocalDateTime inicio;
     private LocalDateTime fim;
 
-    @Enumerated(EnumType.STRING)
     private ReservaStatus status;
     private int quantidade;
 

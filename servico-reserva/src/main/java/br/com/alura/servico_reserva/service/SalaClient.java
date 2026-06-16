@@ -1,18 +1,33 @@
 package br.com.alura.servico_reserva.service;
 
 import br.com.alura.servico_reserva.model.sala.DadosSala;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
+@Component
+public class SalaClient {
 
-@FeignClient("servico-sala")
-public interface SalaClient {
-    @RequestMapping(method = RequestMethod.GET, value = "/buscar/{id}")
-    DadosSala buscarSalaPorId(@PathVariable Long id);
+    private final WebClient client;
 
-    @RequestMapping(method = RequestMethod.GET, value = "/todas/ids")
-    List<Long> buscarSalasAtivas();
+    public SalaClient(@Qualifier("salaWebClient") WebClient client) {
+        this.client = client;
+    }
+
+    public Mono<DadosSala> buscarSalaPorId(Long id) {
+        return client.get()
+                .uri("/buscar/{id}", id)
+                .retrieve()
+                .bodyToMono(DadosSala.class);
+    }
+
+    public Flux<Long> buscarSalasAtivas() {
+        return client.get()
+                .uri("/todas/ids")
+                .retrieve()
+                .bodyToFlux(Long.class);
+    }
 }

@@ -18,7 +18,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,59 +26,60 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import reactor.core.publisher.Mono;
 
 @RestController
+@RequestMapping("/reserva")
 @RequiredArgsConstructor
 public class ReservaController {
-    @Autowired
-    private ReservaService service;
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
-
-    @Autowired
+    private final ReservaService service;
+    private final RabbitTemplate rabbitTemplate;
     private final KafkaTemplate<String, DadosReserva> kafkaTemplate;
 
     @PostMapping("/agendar")
-    public ResponseEntity<String> agendarReserva(@RequestBody @Valid ReservaDTO dto,
+    public Mono<ResponseEntity<String>> agendarReserva(@RequestBody @Valid Mono<ReservaDTO> dtoMono,
             @AuthenticationPrincipal Usuario usuario, UriComponentsBuilder uriBuilder) {
-        var reserva = service.agendarReserva(dto, usuario);
-        URI uri = uriBuilder.path("/reserva/{idReserva}")
-                .buildAndExpand(reserva.getId())
-                .toUri();
-
-        // Envio da reserva para a Exchange reservas.ex
-        rabbitTemplate.convertAndSend("reservas.ex", "", new DadosReservaEmail(reserva));
-        // Envio dos dados de reserva para o serviço de log
-        kafkaTemplate.send("reserva-topic", String.valueOf(reserva.getId()), new DadosReserva(reserva, usuario.getId(), reserva.getSalaId()));
-
-        return ResponseEntity.created(uri).body("Reserva de sala concluída!");
+        return dtoMono.flatMap(dto -> service.agendarReserva(dto, usuario)
+                .doOnNext(reserva -> {
+                    rabbitTemplate.convertAndSend("reservas.ex", "", new DadosReservaEmail(reserva));
+                    kafkaTemplate.send("reserva-topic", String.valueOf(reserva.getId()),
+                            new DadosReserva(reserva, usuario.getId(), reserva.getSalaId()));
+                })
+                .map(reserva -> {
+                    URI uri = uriBuilder.path("/reserva/{idReserva}")
+                            .buildAndExpand(reserva.getId())
+                            .toUri();
+                    return ResponseEntity.created(uri).body("Reserva de sala concluída!");
+                }));
     }
 
     @GetMapping("/{idReserva}")
-    public ResponseEntity<DadosReserva> verReserva(@PathVariable Long idReserva,
+    public Mono<ResponseEntity<DadosReserva>> verReserva(@PathVariable Long idReserva,
             @AuthenticationPrincipal Usuario usuario) {
-        var reserva = service.buscarReserva(idReserva, usuario);
-        return ResponseEntity.ok().body(reserva);
+        return service.buscarReserva(idReserva, usuario)
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/todas")
-    public ResponseEntity<HashMap<String, List<DadosReserva>>> verTodasReservas(
+    public Mono<ResponseEntity<HashMap<String, List<DadosReserva>>>> verTodasReservas(
             @AuthenticationPrincipal Usuario usuario) {
-        var reservas = service.buscarTodasReservas(usuario);
-        return ResponseEntity.ok().body(reservas);
+        System.out.println("CHEGOU NO SERVICO");
+        return service.buscarTodasReservas(usuario)
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/disponiveis")
-    public ResponseEntity<List<Long>> verReservasDisponiveis(@RequestBody HorarioReservaDTO horarios) {
-        var reservasDisponiveis = service.listarReservasDisponiveis(horarios);
-        return  ResponseEntity.ok().body(reservasDisponiveis);
+    public Mono<ResponseEntity<List<Long>>> verReservasDisponiveis(@RequestBody Mono<HorarioReservaDTO> horariosMono) {
+        return horariosMono.flatMap(horarios -> service.listarReservasDisponiveis(horarios)
+                .map(ResponseEntity::ok));
     }
 
     @PatchMapping("/cancelar/{id}")
-    public ResponseEntity<String> cancelarReserva(@PathVariable Long id, @AuthenticationPrincipal Usuario usuario) {
-        service.cancelarReserva(id, usuario);
-        return ResponseEntity.ok().body("Reserva cancelada com sucesso!");
+    public Mono<ResponseEntity<String>> cancelarReserva(@PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuario) {
+        return service.cancelarReserva(id, usuario)
+                .thenReturn(ResponseEntity.ok().body("Reserva cancelada com sucesso!"));
     }
 
 }
