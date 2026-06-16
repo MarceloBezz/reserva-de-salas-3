@@ -10,18 +10,17 @@ import org.springframework.stereotype.Service;
 
 import br.com.alura.servico_usuario.repository.RoleRepository;
 import br.com.alura.servico_usuario.repository.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class UsuarioService implements UserDetailsService {
 
-    @Autowired
-    private UsuarioRepository repository;
+    private final UsuarioRepository repository;
 
-    @Autowired
-    private PasswordEncoder encoder;
+    private final PasswordEncoder encoder;
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

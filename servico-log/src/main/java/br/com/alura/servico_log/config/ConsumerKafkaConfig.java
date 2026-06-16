@@ -18,8 +18,7 @@ import java.util.Map;
 //@EnableKafkaStreams
 public class ConsumerKafkaConfig {
 
-//    @Value(value = "${spring.kafka.bootstrap-servers:localhost:9092}")
-    @Value(value = "${spring.kafka.bootstrap-servers:kafka:9092}")
+    @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
 
 //    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
