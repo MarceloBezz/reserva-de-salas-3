@@ -8,10 +8,19 @@ import org.springframework.stereotype.Service;
 public class LogListener {
 
     @KafkaListener(topics = "reserva-topic", groupId = "grupo")
-    public void log(DadosReserva dados) {
+    public void logarReservaFeita(DadosReserva dados) {
+        logarReserva("Reserva feita!", dados);
+    }
+
+    @KafkaListener(topics = "reserva-delete-log", groupId = "grupo")
+    public void logDeletesBatch(DadosReserva dados) {
+        logarReserva("Reserva excluída!", dados);
+    }
+
+    private void logarReserva(String titulo, DadosReserva dados) {
         System.out.println("""
                 
-                Reserva feita!
+                %s
                 Dados:
                 ID: %s
                 ID do usuário: %s
@@ -20,6 +29,6 @@ public class LogListener {
                 Fim: %s
                 Quantidade de pessoas: %d
                 
-                """.formatted(dados.id(), dados.usuarioId(), dados.sala(), dados.inicio(), dados.fim(), dados.quantidade()));
+                """.formatted(titulo, dados.id(), dados.usuarioId(), dados.sala(), dados.inicio(), dados.fim(), dados.quantidade()));
     }
 }

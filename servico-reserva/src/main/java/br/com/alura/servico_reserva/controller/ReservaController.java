@@ -1,12 +1,9 @@
 package br.com.alura.servico_reserva.controller;
 
-import br.com.alura.servico_reserva.infra.config.ReservaEventPublisher;
-import br.com.alura.servico_reserva.model.Reserva.DadosReservaEmail;
+import br.com.alura.servico_reserva.infra.config.ReservaSSE;
 import br.com.alura.servico_reserva.model.Reserva.HorarioReservaDTO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.MediaType;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -33,24 +30,14 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequiredArgsConstructor
 public class ReservaController {
-
     private final ReservaService service;
-    private final RabbitTemplate rabbitTemplate;
-    private final KafkaTemplate<String, DadosReserva> kafkaTemplate;
-    private final ReservaEventPublisher eventPublisher;
+    private final ReservaSSE eventPublisher;
 
     @PostMapping("/agendar")
     public Mono<ResponseEntity<String>> agendarReserva(@RequestBody @Valid Mono<ReservaDTO> dtoMono,
                                                        @AuthenticationPrincipal Usuario usuario, UriComponentsBuilder uriBuilder) {
         return dtoMono.flatMap(dto ->
-                service
-                        .agendarReserva(dto, usuario)
-                        .doOnSuccess(reserva -> {
-                            rabbitTemplate.convertAndSend("reservas.ex", "", new DadosReservaEmail(reserva));
-                            kafkaTemplate.send("reserva-topic", String.valueOf(reserva.getId()),
-                                    new DadosReserva(reserva, usuario.getId(), reserva.getSalaId()));
-                            eventPublisher.publicar(new DadosReserva(reserva, usuario.getId(), dto.salaId()));
-                        })
+                service.agendarReserva(dto, usuario)
                         .map(reserva -> {
                             URI uri = uriBuilder.path("/reserva/{idReserva}")
                                     .buildAndExpand(reserva.getId())
@@ -92,5 +79,4 @@ public class ReservaController {
         return service.cancelarReserva(id, usuario)
                 .thenReturn(ResponseEntity.ok().body("Reserva cancelada com sucesso!"));
     }
-
 }

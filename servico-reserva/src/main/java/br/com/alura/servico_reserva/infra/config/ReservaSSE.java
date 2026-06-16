@@ -6,7 +6,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 @Component
-public class ReservaEventPublisher {
+public class ReservaSSE {
 
     private final Sinks.Many<DadosReserva> sink = Sinks.many()
             .multicast()
