@@ -33,4 +33,4 @@ build/
 .vscode/
 
 /REGRAS.txt
-/.env
+env
