@@ -2,21 +2,20 @@ package br.com.alura.servico_sala.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.alura.servico_sala.infra.exception.RegraDeNegocioException;
 import br.com.alura.servico_sala.model.sala.DadosSala;
-import br.com.alura.servico_sala.model.sala.HorarioSalaDTO;
 import br.com.alura.servico_sala.model.sala.Sala;
 import br.com.alura.servico_sala.model.sala.SalaDTO;
 import br.com.alura.servico_sala.repository.SalaRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class SalaService {
-    @Autowired
-    private SalaRepository repository;
+    private final SalaRepository repository;
 
     public Sala criarSala(SalaDTO dto) {
         Sala sala = new Sala(dto);

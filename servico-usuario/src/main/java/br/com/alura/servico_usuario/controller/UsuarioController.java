@@ -5,15 +5,14 @@ import org.springframework.web.bind.annotation.*;
 import br.com.alura.servico_usuario.model.Usuario.UsuarioCadastroDTO;
 import br.com.alura.servico_usuario.service.UsuarioService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
-
 @RestController
+@RequiredArgsConstructor
 public class UsuarioController {
-    @Autowired
-    private UsuarioService service;
+    private final UsuarioService service;
 
     @PostMapping("/cadastrar")
     public ResponseEntity<Object> cadastrar(@RequestBody @Valid UsuarioCadastroDTO dto) {

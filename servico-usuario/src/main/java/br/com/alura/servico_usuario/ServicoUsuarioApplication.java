@@ -3,7 +3,8 @@ package br.com.alura.servico_usuario;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+// @SpringBootApplication
+@SpringBootApplication(scanBasePackages = "br.com.alura")
 public class ServicoUsuarioApplication {
 
 	public static void main(String[] args) {

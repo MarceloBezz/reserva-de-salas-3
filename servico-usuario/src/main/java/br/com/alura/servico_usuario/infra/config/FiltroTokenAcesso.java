@@ -2,7 +2,6 @@ package br.com.alura.servico_usuario.infra.config;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,10 +19,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class FiltroTokenAcesso extends OncePerRequestFilter {
 
-    @Autowired
     private final UsuarioRepository usuarioRepository;
 
-    @Autowired
     private final TokenService tokenService;
 
     public FiltroTokenAcesso(TokenService tokenService, UsuarioRepository usuarioRepository) {

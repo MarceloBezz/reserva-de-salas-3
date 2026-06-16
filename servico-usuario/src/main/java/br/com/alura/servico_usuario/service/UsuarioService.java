@@ -1,7 +1,6 @@
 package br.com.alura.servico_usuario.service;
 
 import br.com.alura.servico_usuario.model.Usuario.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

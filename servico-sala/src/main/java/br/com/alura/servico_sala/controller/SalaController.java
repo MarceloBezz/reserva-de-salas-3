@@ -1,19 +1,17 @@
 package br.com.alura.servico_sala.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import br.com.alura.servico_sala.model.sala.DadosSala;
-import br.com.alura.servico_sala.model.sala.HorarioSalaDTO;
 import br.com.alura.servico_sala.model.sala.SalaDTO;
 import br.com.alura.servico_sala.service.SalaService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 import java.net.URI;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,10 +20,10 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
+@RequiredArgsConstructor
 public class SalaController {
 
-    @Autowired
-    private SalaService service;
+    private final SalaService service;
 
     @PostMapping("/cadastrar")
     public ResponseEntity<String> cadastrarSala(@RequestBody @Valid SalaDTO dados, UriComponentsBuilder uriBuilder) {
