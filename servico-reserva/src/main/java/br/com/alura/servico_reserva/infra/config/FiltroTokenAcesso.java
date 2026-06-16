@@ -43,7 +43,7 @@ public class FiltroTokenAcesso implements WebFilter {
                 .flatMap(usuario -> {
                     var authorities = usuario.getRoles()
                             .stream()
-                            .map(SimpleGrantedAuthority::new)
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                             .toList();
                     Authentication auth = new UsernamePasswordAuthenticationToken(usuario, null, authorities);
                     SecurityContext context = new SecurityContextImpl(auth);

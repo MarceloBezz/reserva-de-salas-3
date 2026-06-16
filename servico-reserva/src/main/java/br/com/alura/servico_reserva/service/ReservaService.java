@@ -35,7 +35,7 @@ public class ReservaService {
                 .flatMap(sala ->
                         Flux.fromIterable(validadores)
                                 .flatMap(v -> v.validar(sala, dados))
-                                .thenReturn(sala))
+                                .then(Mono.just(sala)))
                 .map(salaDesejada -> new Reserva(dados, usuario.getId(), salaDesejada.id()))
                 .flatMap(repository::save);
     }
