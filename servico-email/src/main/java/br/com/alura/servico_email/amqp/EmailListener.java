@@ -22,7 +22,15 @@ public class EmailListener {
     public void recebeMensagem(@Payload DadosReservaEmail reserva) {
         DadosUsuario usuario = usuarioClient.buscaPorId(reserva.usuarioId());
 
-        service.enviarEmail(usuario, reserva);
+        service.enviarEmailConfirmacao(usuario, reserva);
+        System.out.println("Email Enviado!");
+    }
+
+    @RabbitListener(queues = "reservas.lembrete-email")
+    public void recebeMensagemLembrete(@Payload DadosReservaEmail reserva) {
+        DadosUsuario usuario = usuarioClient.buscaPorId(reserva.usuarioId());
+
+        service.enviarEmailLembrete(usuario, reserva);
         System.out.println("Email Enviado!");
     }
 }

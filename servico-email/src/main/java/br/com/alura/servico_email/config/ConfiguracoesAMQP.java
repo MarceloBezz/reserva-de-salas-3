@@ -25,24 +25,42 @@ public class ConfiguracoesAMQP {
     }
 
     @Bean
-    public Queue filaReservasEnviarEmail() {
+    public Queue filaReservaCriada() {
         return QueueBuilder
                 .durable("reservas.enviar-email")
                 .build();
     }
 
     @Bean
-    public FanoutExchange fanoutExchange() {
+    public Queue filaLembreteReserva() {
+        return QueueBuilder
+                .durable("reservas.lembrete-email")
+                .build();
+    }
+
+    @Bean
+    // public FanoutExchange fanoutExchange() {
+    public TopicExchange topicExchange() {
         return ExchangeBuilder
-                .fanoutExchange("reservas.ex")
+                .topicExchange("reservas.ex")
+                .durable(true)
                 .build();
     }
 
     @Bean
     public Binding bindReservasEmail() {
         return BindingBuilder
-                .bind(filaReservasEnviarEmail())
-                .to(fanoutExchange());
+                .bind(filaReservaCriada())
+                .to(topicExchange())
+                .with("reservas.criada");
+    }
+
+    @Bean
+    public Binding bindLembreteEmail() {
+        return BindingBuilder
+                .bind(filaLembreteReserva())
+                .to(topicExchange())
+                .with("reservas.lembrete");
     }
 
     @Bean

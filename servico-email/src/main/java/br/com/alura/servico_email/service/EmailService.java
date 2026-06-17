@@ -14,22 +14,22 @@ import java.time.format.DateTimeFormatter;
 public class EmailService {
 
     private final JavaMailSender mailSender;
-
+    
     //TODO Enviar um link para confirmar ou cancelar a reserva
-    public void enviarEmail(DadosUsuario usuario, DadosReservaEmail reserva) {
+    public void enviarEmail(String email, String assunto, String conteudo) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(usuario.email());
+        message.setTo(email);
         message.setFrom("gertuy9@gmail.com");
-        message.setSubject("Reserva confirmada!");
-        message.setText(formatarMensagem(reserva, usuario.nome()));
+        message.setSubject(assunto);
+        message.setText(conteudo);
 
         mailSender.send(message);
     }
 
-    private static String formatarMensagem(DadosReservaEmail reserva, String nome) {
+    //TODO Enviar um link para confirmar ou cancelar a reserva
+    public void enviarEmailConfirmacao(DadosUsuario usuario, DadosReservaEmail reserva) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-        return """
+        String mensagem = """
                 Olá, %s!
                 Estamos muito felizes pela confirmação da sua reserva!
                 Estamos enviando este e-mail apenas para te confirmar que está tudo certo
@@ -40,6 +40,23 @@ public class EmailService {
                 ID da sala: %s
                 
                 Qualquer coisa é só nos mandar uma mensagem que estaremos à disposição! 
-                """.formatted(nome, reserva.inicio().format(formatter), reserva.fim().format(formatter), reserva.salaId());
+                """.formatted(usuario.nome(), reserva.inicio().format(formatter), reserva.fim().format(formatter), reserva.salaId());
+        enviarEmail(usuario.email(), "Reserva confirmada!", mensagem);
+    }
+
+    public void enviarEmailLembrete(DadosUsuario usuario, DadosReservaEmail reserva) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String mensagem = """
+                Olá, %s!
+                Passando para lembrar que você tem uma reserva de sala em breve!
+                Dá uma olhada nos dados da sua reserva para você não esquecer
+                
+                Início: %s
+                Término: %s
+                ID da sala: %s
+                
+                Qualquer coisa é só nos mandar uma mensagem que estaremos à disposição! 
+                """.formatted(usuario.nome(), reserva.inicio().format(formatter), reserva.fim().format(formatter), reserva.salaId());
+        enviarEmail(usuario.email(), "Lembrete de Reserva!", mensagem);
     }
 }

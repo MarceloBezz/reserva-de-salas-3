@@ -21,7 +21,7 @@ public class ReservaEventPublisher {
     public void publicarReservaCriada(Reserva reserva, Long usuarioId) {
         rabbitTemplate.convertAndSend(
                 "reservas.ex",
-                "",
+                "reservas.criada",
                 new DadosReservaEmail(reserva)
         );
 

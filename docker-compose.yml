@@ -159,6 +159,16 @@ services:
     networks:
       - ms-network
 
+  batch:
+    build: ./batch
+    container_name: ms-batch
+    depends_on:
+      server:
+        condition: service_healthy
+    env_file: ./env/docker/batch.env
+    networks:
+      - ms-network
+
 volumes:
   mysql_data:
 

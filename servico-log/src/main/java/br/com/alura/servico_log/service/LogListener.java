@@ -17,6 +17,11 @@ public class LogListener {
         logarReserva("Reserva excluída!", dados);
     }
 
+    @KafkaListener(topics = "reserva-lembrete-log", groupId = "grupo")
+    public void logLembretesBatch(DadosReserva dados) {
+        logarReserva("Email de lembrete enviado!", dados);
+    }
+
     private void logarReserva(String titulo, DadosReserva dados) {
         System.out.println("""
                 

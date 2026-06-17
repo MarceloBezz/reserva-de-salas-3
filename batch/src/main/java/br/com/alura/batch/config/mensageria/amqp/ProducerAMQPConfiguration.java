@@ -1,5 +1,6 @@
-package br.com.alura.servico_reserva.infra.mensageria.amqp;
+package br.com.alura.batch.config.mensageria.amqp;
 
+import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -11,8 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class ReservaAMQPConfiguration {
-
+public class ProducerAMQPConfiguration {
     @Bean
     public RabbitAdmin criaRabbitAdmin(ConnectionFactory conn) {
         return new RabbitAdmin(conn);
@@ -40,3 +40,4 @@ public class ReservaAMQPConfiguration {
         return new TopicExchange("reservas.ex");
     }
 }
+
