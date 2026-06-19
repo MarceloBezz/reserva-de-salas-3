@@ -2,14 +2,17 @@ package br.com.alura.servico_sala.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.alura.servico_sala.infra.exception.RegraDeNegocioException;
 import br.com.alura.servico_sala.model.sala.DadosSala;
 import br.com.alura.servico_sala.model.sala.Sala;
 import br.com.alura.servico_sala.model.sala.SalaDTO;
 import br.com.alura.servico_sala.repository.SalaRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -17,11 +20,20 @@ import lombok.RequiredArgsConstructor;
 public class SalaService {
     private final SalaRepository repository;
 
-    public Sala criarSala(SalaDTO dto) {
+    @Caching(evict = {
+        @CacheEvict(value = "salas", allEntries = true),
+        @CacheEvict(value = "salasIds", allEntries = true)
+    })
+    public DadosSala criarSala(SalaDTO dto) {
         Sala sala = new Sala(dto);
-        return repository.save(sala);
+        return new DadosSala(repository.save(sala));
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "sala", key = "#id"),
+        @CacheEvict(value = "salas", allEntries = true),
+        @CacheEvict(value = "salasIds", allEntries = true)
+    })
     @Transactional
     public void desativarSala(Long id) {
         Sala sala = repository.findById(id)
@@ -29,6 +41,7 @@ public class SalaService {
         sala.setAtiva(false);
     }
 
+    @Cacheable("salas")
     public List<DadosSala> buscarSalas() {
         return repository
                 .findAllByAtivaTrue()
@@ -37,12 +50,14 @@ public class SalaService {
                 .toList();
     }
 
+    @Cacheable(value = "sala", key = "#id")
     public DadosSala buscarPorId(Long id) {
         Sala sala = repository.findById(id)
                 .orElseThrow(() -> new RegraDeNegocioException("Forneça um id válido!"));
         return new DadosSala(sala);
     }
 
+    @Cacheable("salasIds")
     public List<Long> buscarIdsSalas() {
         return repository.findAllIds();
     }

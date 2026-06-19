@@ -4,14 +4,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 
-import br.com.alura.servico_reserva.batch.CleanupJob;
-import br.com.alura.servico_reserva.infra.config.ReservaSSE;
 import br.com.alura.servico_reserva.model.Reserva.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import br.com.alura.servico_reserva.infra.exception.RegraDeNegocioException;
@@ -29,19 +25,29 @@ public class ReservaService {
     private final SalaClient salaClient;
     private final List<IValidacaoReserva> validadores;
     private final ReservaEventPublisher publisher;
-    private static final Logger log = LoggerFactory.getLogger(CleanupJob.class);
+    private final RedisService redisService;
+
+    private static final String CACHE_DISPONIBILIDADE = "disponibilidade";
+    private static final int TTL_CACHE_DISPONIBILIDADE = 5;
+
+    private static final Logger log = LoggerFactory.getLogger(ReservaService.class);
 
     public Mono<Reserva> agendarReserva(ReservaDTO dados, Usuario usuario) {
         return salaClient.buscarSalaPorId(dados.salaId())
                 .flatMap(sala ->
                         Flux.fromIterable(validadores)
                                 .flatMap(v -> v.validar(sala, dados))
-                                .then(Mono.just(sala)))
+                                .then(Mono.just(sala))
+                )
                 .map(salaDesejada -> new Reserva(dados, usuario.getId(), salaDesejada.id()))
                 .flatMap(repository::save)
-                .doOnSuccess(reserva -> {
-                    publisher.publicarReservaCriada(reserva, usuario.getId());
-                });
+                .flatMap(reserva -> redisService
+                        .limparCache(CACHE_DISPONIBILIDADE + ":*")
+                        .thenReturn(reserva)
+                )
+                .doOnNext(reserva ->
+                        publisher.publicarReservaCriada(reserva, usuario.getId())
+                );
     }
 
     public Mono<DadosReserva> buscarReserva(Long idReserva, Usuario usuario) {
@@ -87,11 +93,29 @@ public class ReservaService {
                         return Mono.error(new RegraDeNegocioException("Esta reserva já está cancelada!"));
                     }
                     reserva.setStatus(ReservaStatus.CANCELADA);
-                    return repository.save(reserva).then();
+                    return repository
+                            .save(reserva)
+                            .then(redisService.limparCache(CACHE_DISPONIBILIDADE + ":*"));
                 });
     }
 
     public Mono<List<Long>> listarReservasDisponiveis(HorarioReservaDTO dados) {
+        String chave = CACHE_DISPONIBILIDADE + ":%s:%s".formatted(dados.inicio(), dados.fim());
+
+        return redisService
+                .buscarNoCache(chave)
+                .switchIfEmpty(
+                        Mono.defer(() -> calcularDisponibilidade(dados)
+                                .flatMap(resultado -> redisService
+                                                .salvarNoCache(chave, resultado, TTL_CACHE_DISPONIBILIDADE)
+                                                .thenReturn(resultado)
+                                        .doOnNext(x -> log.info("REDIS - CACHE MISS [{}]", chave))
+                                )
+                        )
+                );
+    }
+
+    private Mono<List<Long>> calcularDisponibilidade(HorarioReservaDTO dados) {
         var salasAtivas = salaClient.buscarSalasAtivas().collectList();
         var reservasOcupadas = repository.findReservasOcupadas(dados.inicio(), dados.fim()).collectList();
 
@@ -99,25 +123,5 @@ public class ReservaService {
                 .map(tuple -> tuple.getT1().stream()
                         .filter(id -> !tuple.getT2().contains(id))
                         .toList());
-    }
-
-    @Transactional
-    public Mono<Void> removerReservasExpiradas() {
-        return repository.findByFimBefore(LocalDateTime.now())
-                .flatMap(reserva -> repository
-                        .delete(reserva)
-                        .then(publisher.publicarReservaExpiradaDeletada(reserva))
-                        .thenReturn(reserva)
-                )
-                .count()
-                .doOnSuccess(total -> {
-                    if (total == 0)
-                        log.info("Nenhuma reserva expirada encontrada!");
-                    else
-                        log.info("{} reservas expiradas removidas", total);
-                })
-                .doOnError(e ->
-                        log.error("Erro ao remover reservas expiradas", e))
-                .then();
     }
 }

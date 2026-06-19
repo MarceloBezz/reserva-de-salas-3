@@ -24,6 +24,7 @@ public interface ReservaRepository extends ReactiveCrudRepository<Reserva, Long>
             FROM reservas r
             WHERE r.inicio < :fim
             AND r.fim > :inicio
+            AND r.status = 'ATIVA'
             """)
     Flux<Long> findReservasOcupadas(@Param("inicio") LocalDateTime inicio, @Param("fim") LocalDateTime fim);
 
