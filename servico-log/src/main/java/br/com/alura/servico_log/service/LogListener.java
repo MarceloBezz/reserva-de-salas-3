@@ -1,6 +1,8 @@
 package br.com.alura.servico_log.service;
 
 import br.com.alura.servico_log.dto.DadosReserva;
+import br.com.alura.servico_log.dto.DadosSugestaoAceita;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,19 @@ public class LogListener {
     @KafkaListener(topics = "reserva-lembrete-log", groupId = "grupo")
     public void logLembretesBatch(DadosReserva dados) {
         logarReserva("Email de lembrete enviado!", dados);
+    }
+
+    @KafkaListener(topics = "sugestao-aceita", groupId = "grupo")
+    public void logSugestaoAceita(DadosReserva dados) {
+        System.out.println("""
+                
+                Sugestão de reserva de sala aceita!
+                Dados:
+                Sala ID: %s
+                Início: %s
+                Fim: %s
+                Quantidade: %s
+                """.formatted(dados.sala(), dados.inicio(), dados.fim(), dados.quantidade()));
     }
 
     private void logarReserva(String titulo, DadosReserva dados) {

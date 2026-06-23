@@ -27,6 +27,7 @@ public class Configuracoes {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/recentes").hasRole("ADMIN")
+                        .pathMatchers("/disponiveis").permitAll()
                         .anyExchange().authenticated())
                 .addFilterAt(filtroTokenAcesso, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
