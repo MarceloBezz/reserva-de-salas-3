@@ -2,6 +2,7 @@ package br.com.alura.servico_reserva.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ public class RedisService {
 
     private static final Logger log = LoggerFactory.getLogger(RedisService.class);
 
+    private final MeterRegistry meterRegistry;
+
     public Mono<Void> limparCache(String chave) {
         return redis
                 .keys(chave)
@@ -33,7 +36,8 @@ public class RedisService {
                 .get(chave)
                 .map(this::desserializar)
                 .doOnNext(x ->
-                        log.info("REDIS - CACHE HIT [{}]", chave));
+                        log.info("REDIS - CACHE HIT [{}]", chave))
+                .doOnNext(x -> meterRegistry.counter("redis.hit").increment());
     }
 
     public Mono<Boolean> salvarNoCache(String chave, List<Long> valor, int tempo) {

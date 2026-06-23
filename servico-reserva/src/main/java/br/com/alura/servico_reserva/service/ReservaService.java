@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 
 import br.com.alura.servico_reserva.model.Reserva.*;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +35,12 @@ public class ReservaService {
 
     private static final Logger log = LoggerFactory.getLogger(ReservaService.class);
 
+    private final MeterRegistry meterRegistry;
+
+    @Timed(
+            value = "reservas.agendamento.tempo",
+            description = "Tempo para agendar reserva"
+    )
     public Mono<Reserva> agendarReserva(ReservaDTO dados, Usuario usuario) {
         return salaClient.buscarSalaPorId(dados.salaId())
                 .flatMap(sala ->
@@ -45,8 +54,10 @@ public class ReservaService {
                         .limparCache(CACHE_DISPONIBILIDADE + ":*")
                         .thenReturn(reserva)
                 )
-                .doOnNext(reserva ->
-                        publisher.publicarReservaCriada(reserva, usuario.getId())
+                .doOnNext(reserva -> {
+                            publisher.publicarReservaCriada(reserva, usuario.getId());
+                            meterRegistry.counter("reservas.criadas").increment();
+                        }
                 );
     }
 
@@ -95,10 +106,15 @@ public class ReservaService {
                     reserva.setStatus(ReservaStatus.CANCELADA);
                     return repository
                             .save(reserva)
-                            .then(redisService.limparCache(CACHE_DISPONIBILIDADE + ":*"));
+                            .then(redisService.limparCache(CACHE_DISPONIBILIDADE + ":*"))
+                            .doOnSuccess(x -> meterRegistry.counter("reservas.canceladas").increment());
                 });
     }
 
+    @Timed(
+            value = "reservas.listar-disponiveis.tempo",
+            description = "Tempo para listar reservas disponíveis"
+    )
     public Mono<List<Long>> listarReservasDisponiveis(HorarioReservaDTO dados) {
         String chave = CACHE_DISPONIBILIDADE + ":%s:%s".formatted(dados.inicio(), dados.fim());
 
@@ -107,9 +123,10 @@ public class ReservaService {
                 .switchIfEmpty(
                         Mono.defer(() -> calcularDisponibilidade(dados)
                                 .flatMap(resultado -> redisService
-                                                .salvarNoCache(chave, resultado, TTL_CACHE_DISPONIBILIDADE)
-                                                .thenReturn(resultado)
+                                        .salvarNoCache(chave, resultado, TTL_CACHE_DISPONIBILIDADE)
+                                        .thenReturn(resultado)
                                         .doOnNext(x -> log.info("REDIS - CACHE MISS [{}]", chave))
+                                        .doOnNext(x -> meterRegistry.counter("redis.miss").increment())
                                 )
                         )
                 );

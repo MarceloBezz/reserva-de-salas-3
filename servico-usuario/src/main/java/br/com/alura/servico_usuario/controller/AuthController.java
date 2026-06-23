@@ -30,7 +30,7 @@ public class AuthController {
     
             var usuario = (Usuario) authentication.getPrincipal();
             String tokenUsuario = tokenService.gerarToken(usuario);
-            return ResponseEntity.ok().body("Token gerado com sucesso!\n" + tokenUsuario);
+            return ResponseEntity.ok().body(tokenUsuario);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Login incorreto!");
         }
