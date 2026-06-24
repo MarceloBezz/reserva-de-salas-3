@@ -39,7 +39,6 @@ public class ConfiguracoesAMQP {
     }
 
     @Bean
-    // public FanoutExchange fanoutExchange() {
     public TopicExchange topicExchange() {
         return ExchangeBuilder
                 .topicExchange("reservas.ex")

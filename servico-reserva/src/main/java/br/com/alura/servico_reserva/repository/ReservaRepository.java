@@ -1,13 +1,9 @@
 package br.com.alura.servico_reserva.repository;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
 import br.com.alura.servico_reserva.model.Reserva.Reserva;
 import br.com.alura.servico_reserva.model.Reserva.ReservaStatus;
 import reactor.core.publisher.Flux;

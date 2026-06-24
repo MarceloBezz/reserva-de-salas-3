@@ -6,7 +6,6 @@ import java.util.List;
 
 import br.com.alura.servico_reserva.model.Reserva.*;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

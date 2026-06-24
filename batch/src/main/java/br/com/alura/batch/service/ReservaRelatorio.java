@@ -11,6 +11,7 @@ import reactor.core.scheduler.Schedulers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -42,9 +43,14 @@ public class ReservaRelatorio {
                                     """.formatted(hoje, totalReservas);
 
                             try {
-                                Files.writeString(Path.of(nomeArquivo), conteudo);
+                                Path diretorio = Path.of("/relatorios");
+                                Files.createDirectories(diretorio);
+
+                                Path arquivo = diretorio.resolve(nomeArquivo);
+
+                                Files.writeString(arquivo, conteudo, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                             } catch (IOException e) {
-                                throw new RuntimeException(e);
+                                throw new RuntimeException("Erro ao gerar relatório", e);
                             }
                         }).subscribeOn(Schedulers.boundedElastic())
                 )

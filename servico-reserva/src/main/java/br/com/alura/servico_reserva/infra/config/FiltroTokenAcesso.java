@@ -1,18 +1,12 @@
 package br.com.alura.servico_reserva.infra.config;
 
-import java.io.IOException;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import br.com.alura.servico_reserva.model.usuario.Usuario;
 import br.com.alura.servico_reserva.service.UsuarioClient;
 import br.com.alura.servico_reserva.service.TokenService;
 import org.springframework.web.server.ServerWebExchange;

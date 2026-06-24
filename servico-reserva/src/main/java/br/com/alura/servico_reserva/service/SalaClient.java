@@ -2,7 +2,6 @@ package br.com.alura.servico_reserva.service;
 
 import br.com.alura.servico_reserva.model.sala.DadosSala;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
