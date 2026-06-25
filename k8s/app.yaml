@@ -1,0 +1,208 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-server
+  template:
+    metadata:
+      labels:
+        app: ms-server
+    spec:
+      containers:
+      - name: ms-server
+        image: marcelobezz07/reservas-server:latest
+        ports:
+        - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-gateway
+  template:
+    metadata:
+      labels:
+        app: ms-gateway
+    spec:
+      containers:
+      - name: ms-gateway
+        image: marcelobezz07/reservas-gateway:latest
+        ports:
+        - containerPort: 8081
+
+        envFrom:
+          - secretRef:
+              name: gateway-env
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-usuario-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-usuario
+  template:
+    metadata:
+      labels:
+        app: ms-usuario
+    spec:
+      containers:
+      - name: ms-usuario
+        image: marcelobezz07/reservas-ms-usuario:latest
+
+        envFrom:
+          - secretRef:
+              name: usuario-env
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-sala-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-sala
+  template:
+    metadata:
+      labels:
+        app: ms-sala
+    spec:
+      containers:
+      - name: ms-sala
+        image: marcelobezz07/reservas-ms-sala:latest
+
+        envFrom:
+          - secretRef:
+              name: sala-env
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-reserva-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-reserva
+  template:
+    metadata:
+      labels:
+        app: ms-reserva
+    spec:
+      containers:
+      - name: ms-reserva
+        image: marcelobezz07/reservas-ms-reserva:latest
+
+        envFrom:
+          - secretRef:
+              name: reserva-env
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-batch-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-batch
+  template:
+    metadata:
+      labels:
+        app: ms-batch
+    spec:
+      volumes:
+        - name: relatorios
+          persistentVolumeClaim:
+            claimName: relatorios-pvc
+
+      containers:
+      - name: ms-batch
+        image: marcelobezz07/reservas-ms-batch:latest
+
+        envFrom:
+          - secretRef:
+              name: batch-env
+
+        volumeMounts:
+          - name: relatorios
+            mountPath: /relatorios
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-email-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-email
+  template:
+    metadata:
+      labels:
+        app: ms-email
+    spec:
+      containers:
+      - name: ms-email
+        image: marcelobezz07/reservas-ms-email:latest
+
+        envFrom:
+          - secretRef:
+              name: email-env
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-log-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-log
+  template:
+    metadata:
+      labels:
+        app: ms-log
+    spec:
+      containers:
+      - name: ms-log
+        image: marcelobezz07/reservas-ms-log:latest
+
+        envFrom:
+          - secretRef:
+              name: log-env
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-sugestoes-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-sugestoes
+  template:
+    metadata:
+      labels:
+        app: ms-sugestoes
+    spec:
+      containers:
+      - name: ms-sugestoes
+        image: marcelobezz07/reservas-ms-sugestoes:latest
+        ports:
+        - containerPort: 8085
+
+        envFrom:
+          - secretRef:
+              name: sugestoes-env

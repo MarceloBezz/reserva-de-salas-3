@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: "mysql"
+  replicas: 1
+  minReadySeconds: 10
+
+  template:
+    metadata:
+      labels:
+        app: mysql
+
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+
+        envFrom:
+          - secretRef:
+              name: mysql-env
+
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /var/lib/mysql
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-volume
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  serviceName: "rabbitmq"
+  replicas: 1
+  minReadySeconds: 10
+
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:management
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+
+        envFrom:
+          - secretRef:
+              name: rabbitmq-env
+
+        volumeMounts:
+        - name: rabbitmq-volume
+          mountPath: /var/lib/rabbitmq
+
+  volumeClaimTemplates:
+  - metadata:
+      name: rabbitmq-volume
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  serviceName: "kafka"
+  replicas: 1
+  minReadySeconds: 10
+
+  template:
+    metadata:
+      labels:
+        app: kafka
+
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: kafka
+        image: apache/kafka:4.0.0
+        ports:
+        - containerPort: 29092
+
+        envFrom:
+          - configMapRef:
+              name: kafka-configmap
+
+        volumeMounts:
+        - name: kafka-volume
+          mountPath: /var/lib/kafka/data
+
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-volume
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
+---
