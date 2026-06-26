@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 
+import java.net.URI;
+
 @RestController
 @RequiredArgsConstructor
 public class UsuarioController {
@@ -18,7 +20,8 @@ public class UsuarioController {
     public ResponseEntity<Object> cadastrar(@RequestBody @Valid UsuarioCadastroDTO dto) {
         try {
             var usuario = service.cadastrar(dto);
-            return ResponseEntity.ok().body(usuario);
+            URI uri = URI.create("/busca-email/" + usuario.email());
+            return ResponseEntity.created(uri).body(usuario);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
