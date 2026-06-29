@@ -1,17 +1,22 @@
 package br.com.alura.servico_sala.infra.config;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import br.com.alura.servico_sala.service.UsuarioClient;
-import br.com.alura.servico_sala.model.usuario.Usuario;
-import br.com.alura.servico_sala.service.TokenService;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,15 +24,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class FiltroTokenAcesso extends OncePerRequestFilter {
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private final UsuarioClient usuarioClient;
-
-    private final TokenService tokenService;
-
-    public FiltroTokenAcesso(TokenService tokenService, UsuarioClient usuarioClient) {
-        this.tokenService = tokenService;
-        this.usuarioClient = usuarioClient;
-    }
+    @Value("${jwt.issuer}")
+    private String issuer;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -36,12 +37,19 @@ public class FiltroTokenAcesso extends OncePerRequestFilter {
         String token = recuperarToken(request);
 
         if (token != null) {
-            // Validação do token
-            String email = tokenService.verificarToken(token);
-            Usuario usuario = usuarioClient.autenticaPorEmail(email);
-            var authorities = usuario.getRoles().stream().map(SimpleGrantedAuthority::new).toList();
+            var algoritmo = Algorithm.HMAC256(secret);
+            DecodedJWT jwt = JWT.require(algoritmo)
+                    .withIssuer(issuer)
+                    .build()
+                    .verify(token);
 
-            Authentication authentication = new UsernamePasswordAuthenticationToken(usuario, null,
+            String username = jwt.getSubject();
+            List<String> roles = jwt.getClaim("roles").asList(String.class);
+            Collection<GrantedAuthority> authorities = roles.stream()
+                    .<GrantedAuthority>map(SimpleGrantedAuthority::new)
+                    .toList();
+
+            Authentication authentication = new UsernamePasswordAuthenticationToken(username, null,
                     authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

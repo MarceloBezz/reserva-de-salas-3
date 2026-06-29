@@ -2,7 +2,6 @@ package br.com.alura.servico_usuario.infra.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,9 +26,7 @@ public class Configuracoes {
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(req -> {
-                    // TODO Refatorar o filtro das rotas
                     req.requestMatchers("/cadastrar", "/login", "/busca-email/*", "/busca-id/*").permitAll();
-                    req.requestMatchers(HttpMethod.PATCH, "/sala/desativar/**").hasRole("ADMIN");
                     req.anyRequest().authenticated();
                 })
                 .sessionManagement(sm -> {

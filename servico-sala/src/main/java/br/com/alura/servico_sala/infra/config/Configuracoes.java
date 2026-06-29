@@ -29,6 +29,7 @@ public class Configuracoes {
                 .authorizeHttpRequests(req -> {
                     req.requestMatchers(HttpMethod.GET, "/**").permitAll();
                     req.requestMatchers(HttpMethod.PATCH, "/desativar/**").hasRole("ADMIN");
+                    req.requestMatchers(HttpMethod.POST, "/cadastrar").hasRole("ADMIN");
                     req.anyRequest().authenticated();
                 })
                 .sessionManagement(sm -> {
