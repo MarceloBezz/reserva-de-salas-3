@@ -14,4 +14,8 @@ public class Usuario {
     private Long id;
     private String email;
     private List<String> roles = new ArrayList<>();
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 }
