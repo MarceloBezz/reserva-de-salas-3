@@ -1,0 +1,139 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+      gateway: ${{ steps.filter.outputs.gateway }}
+      batch: ${{ steps.filter.outputs.batch }}
+      servico-email: ${{ steps.filter.outputs.servico-email }}
+      servico-log: ${{ steps.filter.outputs.servico-log }}
+      servico-reserva: ${{ steps.filter.outputs.servico-reserva }}
+      servico-sala: ${{ steps.filter.outputs.servico-sala }}
+      servico-sugestao-horario: ${{ steps.filter.outputs.servico-sugestao-horario }}
+      servico-usuario: ${{ steps.filter.outputs.servico-usuario }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            server:
+              - 'server/**'
+            gateway:
+              - 'gateway/**'
+            batch:
+              - 'batch/**'
+            servico-email:
+              - 'servico-email/**'
+            servico-log:
+              - 'servico-log/**'
+            servico-reserva:
+              - 'servico-reserva/**'
+            servico-sala:
+              - 'servico-sala/**'
+            servico-sugestao-horario:
+              - 'servico-sugestao-horario/**'
+            servico-usuario:
+              - 'servico-usuario/**'
+
+  test:
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.servico-reserva == 'true' ||
+      needs.detect-changes.outputs.servico-sala == 'true' ||
+      needs.detect-changes.outputs.servico-usuario == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [servico-reserva, servico-sala, servico-usuario]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verifica se este serviço específico mudou
+        id: check
+        run: |
+          echo "changed=${{ needs.detect-changes.outputs[matrix.service] }}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.changed == 'true'
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Rodar testes - ${{ matrix.service }}
+        if: steps.check.outputs.changed == 'true'
+        working-directory: ./${{ matrix.service }}
+        run: mvn -B test
+
+  build:
+    needs: [detect-changes, test]
+    if: |
+      always() &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
+      (
+        needs.detect-changes.outputs.server == 'true' ||
+        needs.detect-changes.outputs.gateway == 'true' ||
+        needs.detect-changes.outputs.batch == 'true' ||
+        needs.detect-changes.outputs.servico-email == 'true' ||
+        needs.detect-changes.outputs.servico-log == 'true' ||
+        needs.detect-changes.outputs.servico-reserva == 'true' ||
+        needs.detect-changes.outputs.servico-sala == 'true' ||
+        needs.detect-changes.outputs.servico-sugestao-horario == 'true' ||
+        needs.detect-changes.outputs.servico-usuario == 'true'
+      )
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - server
+          - gateway
+          - batch
+          - servico-email
+          - servico-log
+          - servico-reserva
+          - servico-sala
+          - servico-sugestao-horario
+          - servico-usuario
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verifica se este serviço mudou
+        id: check
+        run: |
+          echo "changed=${{ needs.detect-changes.outputs[matrix.service] }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.changed == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login no registry
+        if: steps.check.outputs.changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: marcelobezz07
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build e push - ${{ matrix.service }}
+        if: steps.check.outputs.changed == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            marcelobezz07/${{ matrix.service }}:${{ github.sha }}
+            marcelobezz07/${{ matrix.service }}:latest
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
